@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use JWTAuth;
 use App\User;
 use JWTAuthException;
+use Exception;
 class UserController extends Controller
 {   
     private $user;
@@ -15,20 +16,31 @@ class UserController extends Controller
     }
    
     public function register(Request $request){
-        $user_dbase = DB::table('users')->where('email',$request->email)->count();
-        if ($user_dbase > 0) {
-            return response()->json(['message'=>'Email sudah digunakan']);
+        try 
+        {
+            $user_dbase = DB::table('users')->where('email',$request->email)->count();
+            if ($user_dbase > 0) {
+                return response()->json(['message'=>'Email sudah digunakan']);
+            }
+
+            else {
+                $file = $request->file('image');
+                $fileName = md5($request->get('email'));
+                $fileName = $fileName.".".$file->getClientOriginalExtension();
+                $request->file('image')->move("assets/profile_image/", $fileName);
+                $user = $this->user->create([
+                  'name' => $request->get('name'),
+                  'email' => $request->get('email'),
+                  'password' => bcrypt($request->get('password')),
+                    'image' => $fileName,
+                    'address' => $request->get('address'),
+                    'phone_number' => $request->get('phone_number')
+                ]);
+            }
         }
-        
-        else {
-            $user = $this->user->create([
-              'name' => $request->get('name'),
-              'email' => $request->get('email'),
-              'password' => bcrypt($request->get('password')),
-                'image' => $request->get('image'),
-                'address' => $request->get('address'),
-                'phone_number' => $request->get('phone_number')
-            ]);
+        catch(Exception $error)
+        {
+            return response()->json(['error'=>'something went wrong, try again later'],500);
         }
         return response()->json(['status'=>true,'message'=>'User created successfully','data'=>$user]);
     }
@@ -47,7 +59,13 @@ class UserController extends Controller
     }
     
     public function getAuthUser(Request $request){
-        $user = JWTAuth::toUser($request->token);
+        try {
+            $user = JWTAuth::toUser($request->token);
+        }
+        catch(Exception $error)
+        {
+            return response()->json(['error'=>'something went wrong, try again later'],500);
+        }
         return response()->json(['result' => $user], 200);
     }
     
