@@ -40,16 +40,18 @@ class FranchiseController extends Controller
                 $logo = $request->file('logo');
                 $logo_fileName= $request->name."_logo".".".$logo->getClientOriginalExtension();
                 $request->file('logo')->move("assets/franchise_logo/", $logo_fileName);
+                $franchise->logo = $logo_fileName;
                 
                 $banner = $request->file('banner');
                 $banner_fileName= $request->name."_banner".".".$banner->getClientOriginalExtension();
                 $request->file('banner')->move("assets/franchise_banner/", $banner_fileName);
+                $franchise->banner = $banner_fileName;
                 
                 $franchise->save();
                 
                 $franchisor = new Franchisor;
-                //$user = JWTAuth::parseToken()->authenticate();
-                $franchisor->user_id = $request->user_id;
+                $user = JWTAuth::authenticate();
+                $franchisor->user_id = $user->id;
                 $franchisor->franchise_id = $franchise->id;
             
                 $franchisor->save();
@@ -58,8 +60,9 @@ class FranchiseController extends Controller
             }
             catch (Exception $e) {
                 DB::rollback();
-                return response()->json(['error'=>'something went wrong, try again later'],500);
+                return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
             }
         }
+        return response()->json(['status'=>true,'message'=>'Franchise registered successfully','data'=>$franchise],200);
     }
 }

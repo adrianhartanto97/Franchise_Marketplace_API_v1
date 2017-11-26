@@ -42,7 +42,7 @@ class UserController extends Controller
         {
             return response()->json(['error'=>'something went wrong, try again later'],500);
         }
-        return response()->json(['status'=>true,'message'=>'User created successfully','data'=>$user]);
+        return response()->json(['status'=>true,'message'=>'User created successfully','data'=>$user],200);
     }
     
     public function login(Request $request){
@@ -72,6 +72,6 @@ class UserController extends Controller
     public function logout (Request $request)
     {
         JWTAuth::invalidate($request->token);
-        return response()->json(['message'=>'Logout successfully']);
+        return response()->json(['message'=>'Logout successfully'],200);
     }
 } 
