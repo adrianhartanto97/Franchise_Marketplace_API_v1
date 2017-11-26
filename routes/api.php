@@ -25,4 +25,10 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('franchise/register', 'FranchiseController@register_franchise');
     Route::post('franchise/upload_legal_doc','FranchiseController@upload_legal_doc');
     Route::post('franchise/document_status','FranchiseController@document_status');
+    Route::post('franchise/franchise_list','FranchiseController@franchise_list');
+    Route::post('franchise/new_franchise','FranchiseController@new_franchise');
+    Route::post('franchise/favorite_status','FranchiseController@favorite_status');
+    Route::post('franchise/favorite','FranchiseController@favorite');
+    Route::post('franchise/unfavorite','FranchiseController@unfavorite');
+    Route::post('franchise/my_favorite','FranchiseController@my_favorite');
 });

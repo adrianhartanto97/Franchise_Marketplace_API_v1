@@ -9,6 +9,7 @@ use App\Http\Controllers\Controller;
 use App\Franchise;
 use App\Franchisor;
 use App\Legal_Doc;
+use App\Favorite;
 use JWTAuth;
 use JWTAuthException;
 use Exception;
@@ -145,9 +146,111 @@ class FranchiseController extends Controller
     
     public function document_status (Request $request)
     {
-        $franchise_id = $request->franchise_id;
-        $status = DB::table('legal_doc')->where('franchise_id',$franchise_id)->first();
+        try {
+            $franchise_id = $request->franchise_id;
+            $status = DB::table('legal_doc')->where('franchise_id',$franchise_id)->first();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
         
         return response()->json(['document_status'=>$status],200);
+    }
+    
+    public function franchise_list (Request $request)
+    {
+        try {
+        $results = DB::table('view_franchise_active')
+            ->select('*')
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['franchise_list'=>$results],200);
+    }
+    
+    public function new_franchise (Request $request)
+    {
+        try {
+        $count = $request->count; 
+        $results = DB::table('view_franchise_active')
+            ->select('*')
+            ->orderBy('created_at' , 'desc')
+            ->take($count)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['franchise_list'=>$results],200);
+    }
+    
+    public function favorite_status (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        $temp = Favorite::where('franchise_id', $request->franchise_id)->where('user_id', $user->id)->first();
+        if ($temp) {
+            return response()->json(['favorite'=>true],200);
+        }
+        return response()->json(['favorite'=>false],200);
+    }
+    
+    public function favorite (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        $temp = Favorite::where('franchise_id', $request->franchise_id)->where('user_id', $user->id)->first();
+        if ($temp) {
+            return response()->json(['success'=>true],200);
+        }
+        $favorite = new Favorite;
+        
+        try {
+            $favorite->user_id = $user->id;
+            $favorite->franchise_id = $request->franchise_id;
+            
+            $favorite->save();              
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['success'=>true],200);
+    }
+    
+    public function unfavorite (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        $favorite = Favorite::where('franchise_id', $request->franchise_id)->where('user_id', $user->id)->first();
+        
+        try {
+            $favorite->delete();
+                        
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['success'=>true],200);
+    }
+    
+    public function my_favorite (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        try {
+            $results = DB::table('view_favorite')
+            ->select('*')
+            ->where('user_id',$user->id)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['franchise_list'=>$results],200);
     }
 }
