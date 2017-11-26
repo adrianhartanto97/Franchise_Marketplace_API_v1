@@ -23,4 +23,6 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('user', 'UserController@getAuthUser');
     Route::post('logout', 'UserController@logout');
     Route::post('franchise/register', 'FranchiseController@register_franchise');
+    Route::post('franchise/upload_legal_doc','FranchiseController@upload_legal_doc');
+    Route::post('franchise/document_status','FranchiseController@document_status');
 });
