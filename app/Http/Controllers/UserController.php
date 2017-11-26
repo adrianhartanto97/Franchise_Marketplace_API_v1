@@ -8,6 +8,7 @@ use JWTAuth;
 use App\User;
 use JWTAuthException;
 use Exception;
+use Illuminate\Support\Facades\Storage;
 class UserController extends Controller
 {   
     private $user;
@@ -24,15 +25,13 @@ class UserController extends Controller
             }
 
             else {
-                $file = $request->file('image');
-                $fileName = md5($request->get('email'));
-                $fileName = $fileName.".".$file->getClientOriginalExtension();
-                $request->file('image')->move("assets/profile_image/", $fileName);
+                
+                $path = $request->file('image')->store('profile_image', 'public');
                 $user = $this->user->create([
                   'name' => $request->get('name'),
                   'email' => $request->get('email'),
                   'password' => bcrypt($request->get('password')),
-                    'image' => $fileName,
+                    'image' => $path,
                     'address' => $request->get('address'),
                     'phone_number' => $request->get('phone_number')
                 ]);
