@@ -11,6 +11,8 @@ use App\Franchisor;
 use App\Legal_Doc;
 use App\Favorite;
 use App\Brochure;
+use App\Franchisee;
+use App\Outlet;
 use JWTAuth;
 use JWTAuthException;
 use Exception;
@@ -334,5 +336,72 @@ class FranchiseController extends Controller
             return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
         }
         return response()->json(['brochure_list'=>$results],200);
+    }
+    
+    public function add_franchisee (Request $request)
+    {
+        $login = JWTAuth::authenticate();
+        
+        $temp = DB::table('users')->where('email',$request->franchisee_email)->count();
+        if ($temp == 0) {
+            return response()->json(['email franchisee tidak terdaftar']);
+        }
+        else {$user = DB::table('users')->where('email',$request->franchisee_email)->first();}
+        
+        $temp2 = DB::table('franchisee')->where('user_id',$user->id)->count();
+        if ($temp2 > 0)
+        {
+            return response()->json(['Franchisee telah didaftarkan']);
+        }
+        
+        if ($login->email == $request->franchisee_email)
+        {
+            return response()->json(['tidak diperbolehkan mendaftarkan email sendiri']);
+        }
+        
+        DB::beginTransaction();
+        try {
+            $franchisee = new Franchisee;
+            $franchisee->user_id = $user->id;
+            $franchisee->franchise_id = $request->franchise_id;
+            $path = $request->file('agreement')->store('Agreement_Franchisor_Franchisee', 'public');
+            $franchisee->agreement_franchisor_franchisee = $path;
+            $franchisee->status_verified = 'pending';
+            
+            $franchisee->save();
+            
+            $outlet = new Outlet;
+            $outlet->franchisee_id = $franchisee->id;
+            $outlet->telp = $request->telp;
+            $outlet->address = $request->address;
+            $outlet->name = $user->name;
+            $outlet->date_join = $request->date_join;
+            
+            $outlet->save();
+            
+            DB::commit();
+        }
+        
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['status'=>true,'message'=>'Franchisee registered successfully','data'=>$outlet],200);
+    }
+    
+    public function get_outlets(Request $request)
+    {
+        try {
+            $results = DB::table('view_franchisee_active')
+            ->select('franchise_id','address','telp','name','date_join')
+            ->where('franchise_id',$request->franchise_id)
+            ->orderBy('created_at','asc')
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['outlets'=>$results],200);
     }
 }
