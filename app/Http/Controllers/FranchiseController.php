@@ -253,4 +253,20 @@ class FranchiseController extends Controller
         
         return response()->json(['franchise_list'=>$results],200);
     }
+    
+    public function my_franchise (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        try {
+            $results = DB::table('view_user_franchise')
+            ->select('*')
+            ->where('user_id',$user->id)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['franchise_list'=>$results],200);
+    }
 }

@@ -31,4 +31,5 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('franchise/favorite','FranchiseController@favorite');
     Route::post('franchise/unfavorite','FranchiseController@unfavorite');
     Route::post('franchise/my_favorite','FranchiseController@my_favorite');
+    Route::post('franchise/my_franchise','FranchiseController@my_franchise');
 });
