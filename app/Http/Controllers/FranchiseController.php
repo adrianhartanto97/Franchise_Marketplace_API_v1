@@ -10,6 +10,7 @@ use App\Franchise;
 use App\Franchisor;
 use App\Legal_Doc;
 use App\Favorite;
+use App\Brochure;
 use JWTAuth;
 use JWTAuthException;
 use Exception;
@@ -268,5 +269,70 @@ class FranchiseController extends Controller
         }
         
         return response()->json(['franchise_list'=>$results],200);
+    }
+    
+    public function hot_franchise (Request $request)
+    {
+        try {
+        $count = $request->count; 
+        $results = DB::table('view_most_favorite_franchise')
+            ->select('*')
+            ->take($count)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['franchise_list'=>$results],200);
+    }
+    
+    public function franchise_list_by_category (Request $request)
+    {
+        try {
+        $results = DB::table('view_franchise_active')
+            ->select('*')
+            ->where('category',$request->category)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['franchise_list'=>$results],200);
+    }
+    
+    public function add_brochure (Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $path = $request->file('brochure')->store('brochures', 'public');
+            $brochure = new Brochure;
+            $brochure->franchise_id = $request->franchise_id;
+            $brochure->brochure = $path;
+            
+            $brochure->save();
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['success'=>true, 'brochure'=>$path],200);
+    }
+    
+    public function get_brochures (Request $request)
+    {
+        try {
+            $results = DB::table('brochures')
+            ->select('*')
+            ->where('franchise_id',$request->franchise_id)
+            ->orderBy('created_at','asc')
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['brochure_list'=>$results],200);
     }
 }
