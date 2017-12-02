@@ -13,6 +13,7 @@ use App\Favorite;
 use App\Brochure;
 use App\Franchisee;
 use App\Outlet;
+use App\Review_Rating;
 use JWTAuth;
 use JWTAuthException;
 use Exception;
@@ -404,4 +405,69 @@ class FranchiseController extends Controller
         }
         return response()->json(['outlets'=>$results],200);
     }
+    
+    public function allow_review (Request $request)
+    {
+        $allow=true;
+        try {
+            $user = JWTAuth::authenticate();
+            $count = DB::table('view_franchisee_active')->where('user_id',$user->id)->where('franchise_id',$request->franchise_id)->count();
+            
+            if ($count < 1) {$allow = false;}
+            
+            $ct = DB::table('view_franchisee_review_rating')->where('user_id',$user->id)->where('franchise_id',$request->franchise_id)->count();
+            if ($ct > 0) {$allow = false;}
+            
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['allow'=>$allow],200);
+    }
+    
+    public function add_review_rating (Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $review_rating = new Review_Rating;
+            
+            $user = JWTAuth::authenticate();
+            $franchisee = DB::table('view_franchisee_active')->where('user_id',$user->id)->where('franchise_id',$request->franchise_id)->first();
+            $review_rating->franchisee_id = $franchisee->franchisee_id;
+            $review_rating->rating = $request->rating;
+            $review_rating->review = $request->review;
+            
+            $review_rating->save();
+            
+            $avg_rating = DB::table('view_franchisee_review_rating')->where('franchise_id',$request->franchise_id)->avg('rating');
+        $franchise = Franchise::where('id',$request->franchise_id)->first();
+        $franchise->averageRating = $avg_rating;
+
+        $franchise->save();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['success'=>true, 'review_rating'=>$review_rating],200);
+    }
+    
+    public function get_review_rating(Request $request)
+    {
+        try {
+            $results = DB::table('view_franchisee_review_rating')
+            ->select('*')
+            ->where('franchise_id',$request->franchise_id)
+            ->orderBy('created_at','asc')
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['review_rating'=>$results],200);
+    }
+    
 }

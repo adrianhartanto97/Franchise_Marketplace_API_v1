@@ -38,4 +38,7 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('franchise/get_brochures','FranchiseController@get_brochures');
     Route::post('franchise/add_franchisee','FranchiseController@add_franchisee');
     Route::post('franchise/get_outlets','FranchiseController@get_outlets');
+    Route::post('franchise/allow_review','FranchiseController@allow_review');
+    Route::post('franchise/add_review_rating','FranchiseController@add_review_rating');
+    Route::post('franchise/get_review_rating','FranchiseController@get_review_rating');
 });
