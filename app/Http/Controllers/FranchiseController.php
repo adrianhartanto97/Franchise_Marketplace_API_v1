@@ -14,6 +14,7 @@ use App\Brochure;
 use App\Franchisee;
 use App\Outlet;
 use App\Review_Rating;
+use App\Notification;
 use JWTAuth;
 use JWTAuthException;
 use Exception;
@@ -81,6 +82,40 @@ class FranchiseController extends Controller
             }
         }
         return response()->json(['status'=>true,'message'=>'Franchise registered successfully','data'=>$franchise],200);
+    }
+    
+    public function edit_franchise (Request $request)
+    {
+        DB::beginTransaction();
+            
+            try {
+                $franchise = Franchise::where('id', $request->franchise_id)->first();
+                $franchise->name = $request->name;
+                $franchise->category = $request->category;
+                $franchise->type = $request->type;
+                $franchise->establishSince = $request->establishSince;
+                $franchise->investment = $request->investment;
+                $franchise->franchiseFee = $request->franchiseFee;
+                $franchise->website = $request->website;
+                $franchise->address = $request->address;
+                $franchise->location = $request->location;
+                $franchise->phoneNumber = $request->phoneNumber;
+                $franchise->email = $request->email;
+                $franchise->detail = $request->detail;
+                
+                $franchise->logo = $request->file('logo')->storeAs('franchise_logo', $request->name."_logo.".$request->file('logo')->getClientOriginalExtension() , 'public');
+                              
+                $franchise->banner = $request->file('banner')->storeAs('franchise_banner', $request->name."_banner.".$request->file('banner')->getClientOriginalExtension() , 'public');
+                
+                $franchise->save();
+                
+                DB::commit();
+            }
+            catch (Exception $e) {
+                DB::rollback();
+                return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+            }
+        return response()->json(['status'=>true,'message'=>'Franchise edited successfully','data'=>$franchise],200);
     }
     
     public function upload_legal_doc(Request $request)
@@ -330,7 +365,7 @@ class FranchiseController extends Controller
             $results = DB::table('brochures')
             ->select('*')
             ->where('franchise_id',$request->franchise_id)
-            ->orderBy('created_at','asc')
+            ->orderBy('created_at','desc')
             ->get();
         }
         catch (Exception $e) {
@@ -349,7 +384,7 @@ class FranchiseController extends Controller
         }
         else {$user = DB::table('users')->where('email',$request->franchisee_email)->first();}
         
-        $temp2 = DB::table('franchisee')->where('user_id',$user->id)->count();
+        $temp2 = DB::table('franchisee')->where('user_id',$user->id)->where('franchise_id',$request->franchise_id)->count();
         if ($temp2 > 0)
         {
             return response()->json(['Franchisee telah didaftarkan']);
@@ -468,6 +503,58 @@ class FranchiseController extends Controller
             return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
         }
         return response()->json(['review_rating'=>$results],200);
+    }
+    
+    public function get_notifications_count (Request $request)
+    {
+        try {
+            $user = JWTAuth::authenticate();
+            $count = DB::table('view_notification_franchise')
+            ->select('*')
+            ->where('user_id',$user->id)
+            ->where('statusRead','false')
+            ->orderBy('notification_created_at','desc')  
+            ->count();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['notifications_count'=>$count],200);
+    }
+    
+    public function get_notifications (Request $request)
+    {
+        try {
+            $user = JWTAuth::authenticate();
+            $results = DB::table('view_notification_franchise')
+            ->select('*')
+            ->where('user_id',$user->id)
+            ->where('statusRead','false')
+            ->orderBy('notification_created_at','desc')  
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['notifications'=>$results],200);
+    }
+    
+    public function read_notification (Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $user = JWTAuth::authenticate();
+            $notif = Notification::where('user_id', $user->id)->where('franchise_id', $request->franchise_id)->first();
+            $notif->statusRead = 'true';
+            $notif->save();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['success'=>true],200);
     }
     
 }

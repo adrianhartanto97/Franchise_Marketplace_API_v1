@@ -23,6 +23,7 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('user', 'UserController@getAuthUser');
     Route::post('logout', 'UserController@logout');
     Route::post('franchise/register', 'FranchiseController@register_franchise');
+    Route::post('franchise/edit_franchise', 'FranchiseController@edit_franchise');
     Route::post('franchise/upload_legal_doc','FranchiseController@upload_legal_doc');
     Route::post('franchise/document_status','FranchiseController@document_status');
     Route::post('franchise/franchise_list','FranchiseController@franchise_list');
@@ -41,4 +42,7 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('franchise/allow_review','FranchiseController@allow_review');
     Route::post('franchise/add_review_rating','FranchiseController@add_review_rating');
     Route::post('franchise/get_review_rating','FranchiseController@get_review_rating');
+    Route::post('franchise/get_notifications_count','FranchiseController@get_notifications_count');
+    Route::post('franchise/get_notifications','FranchiseController@get_notifications');
+    Route::post('franchise/read_notification','FranchiseController@read_notification');
 });
