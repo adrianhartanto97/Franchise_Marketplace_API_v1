@@ -30,6 +30,6 @@ class CreateNotificationTrigger extends Migration
      */
     public function down()
     {
-        DB::unprepared("DROP TRIGGER tr_notification");
+        DB::unprepared("DROP TRIGGER IF EXISTS tr_notification");
     }
 }

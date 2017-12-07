@@ -529,7 +529,6 @@ class FranchiseController extends Controller
             $results = DB::table('view_notification_franchise')
             ->select('*')
             ->where('user_id',$user->id)
-            ->where('statusRead','false')
             ->orderBy('notification_created_at','desc')  
             ->get();
         }
@@ -556,5 +555,6 @@ class FranchiseController extends Controller
         }
         return response()->json(['success'=>true],200);
     }
+    
     
 }
