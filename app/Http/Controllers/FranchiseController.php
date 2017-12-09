@@ -15,6 +15,8 @@ use App\Franchisee;
 use App\Outlet;
 use App\Review_Rating;
 use App\Notification;
+use App\Event;
+use App\Discount;
 use JWTAuth;
 use JWTAuthException;
 use Exception;
@@ -426,6 +428,21 @@ class FranchiseController extends Controller
         return response()->json(['status'=>true,'message'=>'Franchisee registered successfully','data'=>$outlet],200);
     }
     
+    public function get_franchisee (Request $request)
+    {
+        try {
+            $results = DB::table('view_franchisee_active')
+            ->join('users', 'view_franchisee_active.user_id', '=', 'users.id')
+            ->select('view_franchisee_active.*', 'users.email')
+            ->where('franchise_id',$request->franchise_id)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['franchisee'=>$results],200);
+    }
+    
     public function get_outlets(Request $request)
     {
         try {
@@ -439,6 +456,27 @@ class FranchiseController extends Controller
             return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
         }
         return response()->json(['outlets'=>$results],200);
+    }
+    
+    public function edit_outlet (Request $request)
+    {
+        DB::beginTransaction();
+            
+        try {
+            $outlet = Outlet::where('id', $request->outlet_id)->first();
+            $outlet->telp = $request->telp;
+            $outlet->address = $request->address;
+            $outlet->date_join = $request->date_join;
+            
+            $outlet->save();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['status'=>true,'message'=>'Outlet edited successfully','data'=>$outlet],200);
     }
     
     public function allow_review (Request $request)
@@ -529,6 +567,7 @@ class FranchiseController extends Controller
             $results = DB::table('view_notification_franchise')
             ->select('*')
             ->where('user_id',$user->id)
+            ->where('statusRead','false')
             ->orderBy('notification_created_at','desc')  
             ->get();
         }
@@ -556,5 +595,110 @@ class FranchiseController extends Controller
         return response()->json(['success'=>true],200);
     }
     
+    public function add_event (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        $franchisor = Franchisor::where('franchise_id', $request->franchise_id)->first();
+        
+        if ($user->id != $franchisor->user_id)
+        {
+            return response()->json(['You are not allowed to add event'],401);
+        }
+        
+        DB::beginTransaction();
+        try {
+            $event = new Event;
+            $event->franchise_id = $request->franchise_id;
+            $event->name = $request->name;
+            $event->date = $request->date;
+            $event->time = $request->time;
+            $event->venue = $request->venue;
+            $event->detail = $request->detail;
+            $path = $request->file('image')->store('Event', 'public');
+            $event->image = $path;
+            $event->price = $request->price;
+            $event->status = 'active';
+            
+            $event->save();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['success'=>true, 'message'=>'Event added successfully','data'=>$event ],200);
+    }
+    
+    public function get_events (Request $request)
+    {
+        try {
+            $events = DB::table('event')
+            ->select('*')
+            ->where('status','active')
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['events'=>$events],200);
+    }
+    
+    public function allow_book_event (Request $request)
+    {
+        $allow=true;
+        try {
+            $user = JWTAuth::authenticate();
+            
+            $ct1 = DB::table('view_event_franchisor')->where('event_id',$request->event_id)->where('user_id',$user->id)->count();
+            if ($ct1 > 0) {$allow = false;}
+            
+            $ct2 = DB::table('discount')->where('event_id',$request->event_id)->where('user_id',$user->id)->count();
+            if ($ct2 > 0) {$allow = false;} 
+            
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['allow'=>$allow],200);
+    }
+    
+    public function book_event (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        DB::beginTransaction();
+        try {
+            $discount = new Discount;
+            $discount->user_id = $user->id;
+            $discount->event_id = $request->event_id;
+            $discount->qrcode = $request->qrcode;
+            $discount->amount = $request->amount;
+            
+            $discount->save();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['success'=>true, 'message'=>'Event booked successfully','data'=>$discount ],200);
+    }
+    
+    public function my_booked_events (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        try {
+            $events = DB::table('view_event_book')
+            ->select('*')
+            ->where('user_id',$user->id)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['events'=>$events],200);
+    }
     
 }

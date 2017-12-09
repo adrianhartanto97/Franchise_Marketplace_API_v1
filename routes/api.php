@@ -38,11 +38,18 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('franchise/add_brochure','FranchiseController@add_brochure');
     Route::post('franchise/get_brochures','FranchiseController@get_brochures');
     Route::post('franchise/add_franchisee','FranchiseController@add_franchisee');
+    Route::post('franchise/get_franchisee','FranchiseController@get_franchisee');
     Route::post('franchise/get_outlets','FranchiseController@get_outlets');
+    Route::post('franchise/edit_outlet','FranchiseController@edit_outlet');
     Route::post('franchise/allow_review','FranchiseController@allow_review');
     Route::post('franchise/add_review_rating','FranchiseController@add_review_rating');
     Route::post('franchise/get_review_rating','FranchiseController@get_review_rating');
     Route::post('franchise/get_notifications_count','FranchiseController@get_notifications_count');
     Route::post('franchise/get_notifications','FranchiseController@get_notifications');
     Route::post('franchise/read_notification','FranchiseController@read_notification');
+    Route::post('franchise/add_event','FranchiseController@add_event');
+    Route::post('franchise/get_events','FranchiseController@get_events');
+    Route::post('franchise/allow_book_event','FranchiseController@allow_book_event');
+    Route::post('franchise/book_event','FranchiseController@book_event');
+    Route::post('franchise/my_booked_events','FranchiseController@my_booked_events');
 });
