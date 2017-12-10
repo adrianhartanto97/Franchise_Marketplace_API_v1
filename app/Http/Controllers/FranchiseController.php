@@ -105,9 +105,9 @@ class FranchiseController extends Controller
                 $franchise->email = $request->email;
                 $franchise->detail = $request->detail;
                 
-                $franchise->logo = $request->file('logo')->storeAs('franchise_logo', $request->name."_logo.".$request->file('logo')->getClientOriginalExtension() , 'public');
+                //$franchise->logo = $request->file('logo')->storeAs('franchise_logo', $request->name."_logo.".$request->file('logo')->getClientOriginalExtension() , 'public');
                               
-                $franchise->banner = $request->file('banner')->storeAs('franchise_banner', $request->name."_banner.".$request->file('banner')->getClientOriginalExtension() , 'public');
+                //$franchise->banner = $request->file('banner')->storeAs('franchise_banner', $request->name."_banner.".$request->file('banner')->getClientOriginalExtension() , 'public');
                 
                 $franchise->save();
                 
@@ -118,6 +118,32 @@ class FranchiseController extends Controller
                 return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
             }
         return response()->json(['status'=>true,'message'=>'Franchise edited successfully','data'=>$franchise],200);
+    }
+    
+    public function edit_franchise_logo_banner (Request $request)
+    {
+        DB::beginTransaction();
+            
+            try {
+                $franchise = Franchise::where('id', $request->franchise_id)->first();
+                
+                if ($request->file('logo')) {
+                    $franchise->logo = $request->file('logo')->storeAs('franchise_logo', $franchise->name."_logo.".$request->file('logo')->getClientOriginalExtension() , 'public');
+                }
+                
+                if ($request->file('banner')) {
+                    $franchise->banner = $request->file('banner')->storeAs('franchise_banner', $franchise->name."_banner.".$request->file('banner')->getClientOriginalExtension() , 'public');
+                }
+                
+                $franchise->save();
+                
+                DB::commit();
+            }
+            catch (Exception $e) {
+                DB::rollback();
+                return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+            }
+        return response()->json(['status'=>true,'message'=>'Franchise edited successfully','data'=>$franchise],200);     
     }
     
     public function upload_legal_doc(Request $request)

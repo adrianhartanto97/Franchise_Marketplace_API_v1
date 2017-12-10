@@ -83,6 +83,25 @@ class UserController extends Controller
             $user->name = $request->name;
             $user->address = $request->address;
             $user->phone_number = $request->phone_number;
+            //$path = $request->file('image')->store('profile_image', 'public');
+            //$user->image = $path;
+                      
+            $user->save();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['status'=>true,'message'=>'Edited successfully', 'data' => $user], 200);
+    }
+    
+    public function change_user_image (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        DB::beginTransaction();
+        try {
             $path = $request->file('image')->store('profile_image', 'public');
             $user->image = $path;
                       
@@ -94,7 +113,7 @@ class UserController extends Controller
             DB::rollback();
             return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
         }
-        return response()->json(['status'=>true,'message'=>'Edited successfully', 'data' => $user], 200);
+        return response()->json(['status'=>true,'message'=>'Image changed successfully', 'data' => $user], 200);
     }
     
     public function change_password (Request $request)

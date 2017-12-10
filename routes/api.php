@@ -23,9 +23,11 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('user', 'UserController@getAuthUser');
     Route::post('auth/edit_profile', 'UserController@edit_profile');
     Route::post('auth/change_password', 'UserController@change_password');
+    Route::post('auth/change_user_image', 'UserController@change_user_image');
     Route::post('logout', 'UserController@logout');
     Route::post('franchise/register', 'FranchiseController@register_franchise');
     Route::post('franchise/edit_franchise', 'FranchiseController@edit_franchise');
+    Route::post('franchise/edit_franchise_logo_banner', 'FranchiseController@edit_franchise_logo_banner');
     Route::post('franchise/upload_legal_doc','FranchiseController@upload_legal_doc');
     Route::post('franchise/document_status','FranchiseController@document_status');
     Route::post('franchise/franchise_list','FranchiseController@franchise_list');
