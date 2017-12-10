@@ -701,4 +701,20 @@ class FranchiseController extends Controller
         return response()->json(['events'=>$events],200);
     }
     
+    public function delete_brochure (Request $request)
+    {
+        $brochure = Brochure::where('id', $request->brochure_id)->first();
+        DB::beginTransaction();
+        try {
+            $brochure->delete();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['success'=>true, 'message'=>'Brochure deleted successfully' ],200);     
+    }
+    
 }

@@ -8,6 +8,7 @@ use JWTAuth;
 use App\User;
 use JWTAuthException;
 use Exception;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 class UserController extends Controller
 {   
@@ -72,5 +73,53 @@ class UserController extends Controller
     {
         JWTAuth::invalidate($request->token);
         return response()->json(['message'=>'Logout successfully'],200);
+    }
+    
+    public function edit_profile (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        DB::beginTransaction();
+        try {
+            $user->name = $request->name;
+            $user->address = $request->address;
+            $user->phone_number = $request->phone_number;
+            $path = $request->file('image')->store('profile_image', 'public');
+            $user->image = $path;
+                      
+            $user->save();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['status'=>true,'message'=>'Edited successfully', 'data' => $user], 200);
+    }
+    
+    public function change_password (Request $request)
+    {
+        $user = JWTAuth::authenticate();
+        $pass_dbase = DB::table('users')
+            ->where('id', $user->id)
+            ->first();
+        
+        if(!Hash::check($request->old_password, $pass_dbase->password))
+        {
+            return response()->json(['message'=>'Old Password Mismatch'],401);
+        }
+        
+        DB::beginTransaction();
+        try {
+            $user->password = bcrypt($request->new_password);                    
+            $user->save();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['status'=>true,'message'=>'Password changed successfully'], 200);
     }
 } 
