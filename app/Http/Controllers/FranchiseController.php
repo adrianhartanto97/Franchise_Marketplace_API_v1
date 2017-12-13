@@ -368,6 +368,37 @@ class FranchiseController extends Controller
         return response()->json(['franchise_list'=>$results],200);
     }
     
+    public function franchise_list_by_alphabet (Request $request)
+    {
+        try {
+        $results = DB::table('view_franchise_active')
+            ->select('*')
+            ->orderBy('name',$request->order)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['franchise_list'=>$results],200);
+    }
+    
+    public function franchise_list_by_price_range (Request $request)
+    {
+        try {
+        $results = DB::table('view_franchise_active')
+            ->select('*')
+            ->whereBetween('investment', [$request->min_value, $request->max_value])
+            ->orderBy('investment',$request->order)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['franchise_list'=>$results],200);
+    }
+    
     public function add_brochure (Request $request)
     {
         DB::beginTransaction();
@@ -695,11 +726,26 @@ class FranchiseController extends Controller
         $user = JWTAuth::authenticate();
         DB::beginTransaction();
         try {
+            $event = Event::where('id', $request->event_id)->first();
+            
             $discount = new Discount;
             $discount->user_id = $user->id;
             $discount->event_id = $request->event_id;
             $discount->qrcode = $request->qrcode;
-            $discount->amount = $request->amount;
+            
+            $today = date("Y-m-d H:i:s");
+            $today = date_create($today);
+            $event_date = date_create($event->date." ".$event->time);
+            $diff = date_diff($event_date, $today)->days;
+            
+            $disc = 0.0;
+            if ($diff > 30) {$disc = 0.3;}
+            else if ($diff >=15 and $diff <=30) {$disc = 0.2;}
+            else {$disc = 0.1;}
+            
+            $amount = (double)$event->price * $disc;
+            
+            $discount->amount = $amount; 
             
             $discount->save();
             
@@ -709,7 +755,7 @@ class FranchiseController extends Controller
             DB::rollback();
             return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
         }
-        return response()->json(['success'=>true, 'message'=>'Event booked successfully','data'=>$discount ],200);
+        return response()->json(['success'=>true, 'message'=>'Event booked successfully','data'=>$discount,'disc' =>$disc ],200);
     }
     
     public function my_booked_events (Request $request)

@@ -57,4 +57,6 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('franchise/allow_book_event','FranchiseController@allow_book_event');
     Route::post('franchise/book_event','FranchiseController@book_event');
     Route::post('franchise/my_booked_events','FranchiseController@my_booked_events');
+    Route::post('franchise/franchise_list_by_alphabet','FranchiseController@franchise_list_by_alphabet');
+    Route::post('franchise/franchise_list_by_price_range','FranchiseController@franchise_list_by_price_range');
 });
