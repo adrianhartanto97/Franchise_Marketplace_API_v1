@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Collection;
 use App\Http\Requests;
 use App\Http\Controllers\Controller;
 use App\Franchise;
@@ -247,6 +248,15 @@ class FranchiseController extends Controller
             ->orderBy('created_at' , 'desc')
             ->take($count)
             ->get();
+            
+            foreach ($results as $franchise)
+            {
+                $brochures = DB::table('brochures')
+                            ->select('*')
+                            ->where('franchise_id',$franchise->id)
+                            ->orderBy('created_at','desc')->get();
+                $franchise->brochures =  $brochures;    
+            }
         }
         catch (Exception $e) {
             return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
@@ -345,6 +355,15 @@ class FranchiseController extends Controller
             ->select('*')
             ->take($count)
             ->get();
+            
+        foreach ($results as $franchise)
+        {
+            $brochures = DB::table('brochures')
+                        ->select('*')
+                        ->where('franchise_id',$franchise->franchise_id)
+                        ->orderBy('created_at','desc')->get();
+            $franchise->brochures =  $brochures;    
+        }
         }
         catch (Exception $e) {
             return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
@@ -488,9 +507,8 @@ class FranchiseController extends Controller
     public function get_franchisee (Request $request)
     {
         try {
-            $results = DB::table('view_franchisee_active')
-            ->join('users', 'view_franchisee_active.user_id', '=', 'users.id')
-            ->select('view_franchisee_active.*', 'users.email')
+            $results = DB::table('view_franchisee')
+            ->select('*')
             ->where('franchise_id',$request->franchise_id)
             ->get();
         }
