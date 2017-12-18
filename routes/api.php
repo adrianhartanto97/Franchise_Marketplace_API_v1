@@ -59,4 +59,8 @@ Route::group(['middleware' => 'jwt.auth'], function () {
     Route::post('franchise/my_booked_events','FranchiseController@my_booked_events');
     Route::post('franchise/franchise_list_by_alphabet','FranchiseController@franchise_list_by_alphabet');
     Route::post('franchise/franchise_list_by_price_range','FranchiseController@franchise_list_by_price_range');
+    Route::post('franchise/filter_franchise','FranchiseController@filter_franchise');
+    Route::post('franchise/get_franchise_event','FranchiseController@get_franchise_event');
+    Route::post('franchise/edit_event','FranchiseController@edit_event');
+    Route::post('franchise/change_event_image','FranchiseController@change_event_image');
 });

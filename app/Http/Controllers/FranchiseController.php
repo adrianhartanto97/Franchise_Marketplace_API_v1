@@ -335,7 +335,7 @@ class FranchiseController extends Controller
     {
         $user = JWTAuth::authenticate();
         try {
-            $results = DB::table('view_user_franchise')
+            $results = DB::table('view_franchisor_franchisee_list')
             ->select('*')
             ->where('user_id',$user->id)
             ->get();
@@ -409,6 +409,26 @@ class FranchiseController extends Controller
             ->select('*')
             ->whereBetween('investment', [$request->min_value, $request->max_value])
             ->orderBy('investment',$request->order)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        
+        return response()->json(['franchise_list'=>$results],200);
+    }
+    
+    public function filter_franchise (Request $request)
+    {
+        try {
+        $query = DB::table('view_franchise_active')
+            ->select('*')
+            ->whereBetween('investment', [$request->min_value, $request->max_value]);
+        if ($request->category != "all")
+        {
+            $query->where('category',$request->category);
+        }
+        $results = $query->orderBy('name',$request->alphabet_order)
             ->get();
         }
         catch (Exception $e) {
@@ -705,6 +725,20 @@ class FranchiseController extends Controller
         return response()->json(['success'=>true, 'message'=>'Event added successfully','data'=>$event ],200);
     }
     
+    public function get_franchise_event (Request $request)
+    {
+        try {
+            $events = DB::table('event')
+            ->select('*')
+            ->where('franchise_id',$request->franchise_id)
+            ->get();
+        }
+        catch (Exception $e) {
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['events'=>$events],200);
+    }
+    
     public function get_events (Request $request)
     {
         try {
@@ -807,4 +841,46 @@ class FranchiseController extends Controller
         return response()->json(['success'=>true, 'message'=>'Brochure deleted successfully' ],200);     
     }
     
+    public function edit_event (Request $request)
+    {
+        DB::beginTransaction();
+            
+            try {
+                $event = Event::where('id', $request->event_id)->first();
+                $event->name = $request->name;
+                $event->date = $request->date;
+                $event->time = $request->time;
+                $event->venue = $request->venue;
+                $event->detail = $request->detail;
+                $event->price = $request->price;
+                
+                $event->save();
+                
+                DB::commit();
+            }
+            catch (Exception $e) {
+                DB::rollback();
+                return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+            }
+        return response()->json(['status'=>true,'message'=>'Event edited successfully','data'=>$event],200);
+    }
+    
+    public function change_event_image (Request $request)
+    {
+        DB::beginTransaction();
+        try {
+            $event = Event::where('id', $request->event_id)->first();
+            $path = $request->file('image')->store('Event', 'public');
+            $event->image = $path;
+                      
+            $event->save();
+            
+            DB::commit();
+        }
+        catch (Exception $e) {
+            DB::rollback();
+            return response()->json(['error'=>'something went wrong, try again later','message'=>$e],500);
+        }
+        return response()->json(['status'=>true,'message'=>'Event Image changed successfully', 'data' => $event], 200);
+    }
 }
